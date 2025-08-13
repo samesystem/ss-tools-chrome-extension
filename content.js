@@ -14,15 +14,53 @@
         }
     }
 
-    // Function to inject Bootstrap JS into the page
-    function injectBootstrapJS() {
-        if (!document.querySelector('script[src*="bootstrap"]')) {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js';
-            script.integrity = 'sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL';
-            script.crossOrigin = 'anonymous';
-            document.head.appendChild(script);
-        }
+    // Custom dropdown implementation (no Bootstrap JS needed)
+    function initializeCustomDropdown(dropdownContainer) {
+        const dropdownToggle = dropdownContainer.querySelector('.dropdown-toggle');
+        const dropdownMenu = dropdownContainer.querySelector('.dropdown-menu');
+
+        if (!dropdownToggle || !dropdownMenu) return;
+
+        // Toggle dropdown on button click
+        dropdownToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                if (menu !== dropdownMenu) {
+                    menu.classList.remove('show');
+                }
+            });
+
+            // Toggle current dropdown
+            dropdownMenu.classList.toggle('show');
+            dropdownToggle.setAttribute('aria-expanded', dropdownMenu.classList.contains('show'));
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownContainer.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Close dropdown when pressing Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Close dropdown when clicking on menu items
+        dropdownMenu.addEventListener('click', function(e) {
+            if (e.target.classList.contains('dropdown-item')) {
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
     }
 
     // Function to create and style the dropdown copy button with Bootstrap classes
@@ -42,13 +80,58 @@
         const dropdownToggle = document.createElement('button');
         dropdownToggle.className = 'btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split';
         dropdownToggle.type = 'button';
-        dropdownToggle.setAttribute('data-bs-toggle', 'dropdown');
         dropdownToggle.setAttribute('aria-expanded', 'false');
         dropdownToggle.innerHTML = '<span class="visually-hidden">Toggle Dropdown</span>';
 
-        // Create the dropdown menu
+        // Create the dropdown menu with custom positioning
         const dropdownMenu = document.createElement('ul');
         dropdownMenu.className = 'dropdown-menu';
+        dropdownMenu.style.cssText = `
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            display: none;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            margin: 0;
+            font-size: 0.875rem;
+            color: #212529;
+            text-align: left;
+            list-style: none;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid rgba(0,0,0,.15);
+            border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+        `;
+
+        // CSS for show state
+        const style = document.createElement('style');
+        style.textContent = `
+            .dropdown-menu.show {
+                display: block !important;
+            }
+            .dropdown-item {
+                display: block;
+                width: 100%;
+                padding: 0.25rem 1rem;
+                clear: both;
+                font-weight: 400;
+                color: #212529;
+                text-align: inherit;
+                text-decoration: none;
+                white-space: nowrap;
+                background-color: transparent;
+                border: 0;
+                cursor: pointer;
+            }
+            .dropdown-item:hover {
+                color: #1e2125;
+                background-color: #e9ecef;
+            }
+        `;
+        document.head.appendChild(style);
 
         // Create dropdown items
         const fullCommandItem = document.createElement('li');
@@ -93,6 +176,9 @@
             const rspecCommand = nextSibling ? commandFromDivContent(nextSibling.textContent, true) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
+
+        // Initialize custom dropdown functionality
+        initializeCustomDropdown(dropdownContainer);
 
         return dropdownContainer;
     }
@@ -165,9 +251,8 @@
 
     // Initialize the extension when the page is ready
     function init() {
-        // Inject Bootstrap CSS and JS
+        // Inject Bootstrap CSS (but not JS due to CSP)
         injectBootstrapCSS();
-        injectBootstrapJS();
 
         // Add copy buttons to existing content
         addCopyButton();
