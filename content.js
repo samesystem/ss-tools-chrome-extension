@@ -198,11 +198,15 @@
     // Show visual feedback when text is copied using Bootstrap classes
     function showCopyFeedback(button, feedbackText, buttonClass, originalText) {
         button.textContent = feedbackText;
-        const originalClass = button.className;
-        button.className = `btn ${buttonClass} btn-sm`;
+        const toggleButton = button.nextElementSibling;
+
+        button.classList.add(buttonClass);
+        toggleButton.classList.add(buttonClass);
+
         setTimeout(() => {
             button.textContent = originalText;
-            button.className = originalClass;
+            button.classList.remove(buttonClass);
+            toggleButton.classList.remove(buttonClass);
         }, 1500);
     }
 
@@ -234,6 +238,7 @@
             .replace(/^result {\s+rspec\s+'\.\//, "'")
             .replace(/\s+}$/, '')
             .replace(/rspec\s+\.\//gm, ' ')
+            .replace(/rspec\s+'\.\//gm, " '")
             .replace(/#.*$/gm, '')
             .replace(/\s+/gm, ' ');
 
@@ -241,7 +246,7 @@
 
         if (filesOnly) {
             // Remove line numbers (everything after :) to get files only
-            command = command.replace(/:\d+/g, '').replace(/[\[\]']+/g, '');
+            command = command.replace(/\[[\d:]+\]/g, '').replace(/'/g, "").replace(/:\d+/g, '');
             // Remove duplicate file paths and clean up
             const files = [...new Set(command.replace('bundle exec rspec ', '').split(' ').filter(file => file.trim()))];
             command = "bundle exec rspec " + files.join(' ');
