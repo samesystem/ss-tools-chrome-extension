@@ -210,7 +210,7 @@
     function addCopyButton() {
         // Look for divs that contain text matching "rspec ./spec/*" pattern
         const allDivs = document.querySelectorAll('div');
-        const rspecPattern = /^result {\s+rspec \.\/spec\//;
+        const rspecPattern = /^result {\s+rspec '?\.\/spec\//;
         const buttonExists = !!document.querySelector('[data-copy-button]');
 
         if (buttonExists) {
@@ -231,6 +231,7 @@
     function commandFromDivContent(content, filesOnly = false) {
         const strippedContent = content
             .replace(/^result {\s+rspec\s+\.\//, '')
+            .replace(/^result {\s+rspec\s+'\.\//, "'")
             .replace(/\s+}$/, '')
             .replace(/rspec\s+\.\//gm, ' ')
             .replace(/#.*$/gm, '')
@@ -240,7 +241,7 @@
 
         if (filesOnly) {
             // Remove line numbers (everything after :) to get files only
-            command = command.replace(/:\d+/g, '');
+            command = command.replace(/:\d+/g, '').replace(/[\[\]']+/g, '');
             // Remove duplicate file paths and clean up
             const files = [...new Set(command.replace('bundle exec rspec ', '').split(' ').filter(file => file.trim()))];
             command = "bundle exec rspec " + files.join(' ');
