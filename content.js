@@ -2,6 +2,15 @@
 (function() {
     'use strict';
 
+    const COPY_SVG = `
+        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+             width="18" height="18"
+             viewBox="0 0 32 32" enable-background="new 0 0 32 32" xml:space="preserve"
+        >
+            <rect x="13" y="9" fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" width="14" height="18"/>
+            <polyline fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" points="11,23 5,23 5,5 19,5 19,7 "/>
+        </svg>
+    `
     // Function to inject Bootstrap CSS into the page
     function injectBootstrapCSS() {
         if (!document.querySelector('link[href*="bootstrap"]')) {
@@ -195,6 +204,14 @@
         });
     }
 
+    function writeToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            console.log('Text copied to clipboard successfully');
+        }).catch(function(err) {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
     // Show visual feedback when text is copied using Bootstrap classes
     function showCopyFeedback(button, feedbackText, buttonClass, originalText) {
         button.textContent = feedbackText;
@@ -211,7 +228,7 @@
     }
 
     // Function to find divs containing rspec commands and add copy buttons
-    function addCopyButton() {
+    function addCopyRspecButton() {
         // Look for divs that contain text matching "rspec ./spec/*" pattern
         const allDivs = document.querySelectorAll('div');
         const rspecPattern = /^result {\s+rspec '?\.\/spec\//;
@@ -255,13 +272,38 @@
         return command;
     }
 
+    function addCopyBranchButton() {
+        // Look for divs that contain text matching "git checkout -b" pattern
+        const descriptionDiv = document.querySelector('div#description');
+        if(!descriptionDiv) return;
+
+        const branchDiv = descriptionDiv.querySelector('div')?.querySelector('div');
+        const branchName = branchDiv ? branchDiv.textContent.trim() : '';
+        if (branchName === '') return;
+
+        // Create a copy link and insert at the end of the branch div
+        const copyLink = document.createElement('a');
+        copyLink.innerHTML = COPY_SVG;
+        copyLink.className = "btn btn-sm btn-outline-primary ms-1";
+        copyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            writeToClipboard(branchName);
+            copyLink.innerHTML = 'Copied!';
+            setTimeout(() => {
+                copyLink.innerHTML = COPY_SVG;
+            }, 1500);
+        });
+        branchDiv.appendChild(copyLink);
+    }
+
     // Initialize the extension when the page is ready
     function init() {
         // Inject Bootstrap CSS (but not JS due to CSP)
         injectBootstrapCSS();
 
         // Add copy buttons to existing content
-        addCopyButton();
+        addCopyRspecButton();
+        addCopyBranchButton();
     }
 
     // Wait for the page to be ready
