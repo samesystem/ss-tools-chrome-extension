@@ -2,6 +2,16 @@
 (function() {
     'use strict';
 
+    // Function to inject Bootstrap Icons CSS into the page
+    function injectBootstrapIcons() {
+        if (!document.querySelector('link[href*="bootstrap-icons"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css';
+            document.head.appendChild(link);
+        }
+    }
+
     const COPY_SVG = `
         <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
              width="18" height="18"
@@ -296,14 +306,44 @@
         branchDiv.appendChild(copyLink);
     }
 
+    function styleReportLinks() {
+        // Look for links that contain "/reports/" in their href
+        debugger
+        const reportLinks = document.querySelectorAll('#description table a[href*="/job/"]');
+        const seleniumLinks = document.querySelectorAll('#description table a[href*="/job/selenium"]');
+        const playwrightLinks = document.querySelectorAll('#description table a[href*="/job/playwright"]');
+
+        reportLinks.forEach(link => {
+          link.innerHTML = `<i class="bi bi-file-code" style="font-size: 18px;"></i>`;
+        });
+
+        seleniumLinks.forEach(link => {
+            // add another link after this one
+            const newLink = document.createElement('a');
+            newLink.href = link.href.replace('/console', '/artifact/report.html')
+            newLink.innerHTML = `<i class="bi bi-file-earmark-text" style="font-size: 18px;"></i>`;
+            link.insertAdjacentElement('afterend', newLink);
+        });
+
+        playwrightLinks.forEach(link => {
+            // add another link after this one
+            const newLink = document.createElement('a');
+            newLink.href = link.href.replace('/console', '/artifact/index.html')
+            newLink.innerHTML = `<i class="bi bi-file-earmark-text" style="font-size: 18px;"></i>`;
+            link.insertAdjacentElement('afterend', newLink);
+        });
+    }
+
     // Initialize the extension when the page is ready
     function init() {
         // Inject Bootstrap CSS (but not JS due to CSP)
         injectBootstrapCSS();
+        injectBootstrapIcons();
 
         // Add copy buttons to existing content
         addCopyRspecButton();
         addCopyBranchButton();
+        styleReportLinks();
     }
 
     // Wait for the page to be ready
