@@ -346,9 +346,11 @@
         const href = link.href;
         let html = `<a href="${href}"><i class="bi bi-file-code" style="font-size: 18px;"></i></a>`;
         if (href.includes('/job/selenium')) {
-            html = html + `<a href="${href}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
+            const url = href.replace('/console', '/artifact/report.html');
+            html = html + `<a href="${url}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
         } else if (href.includes('/job/playwright')) {
-            html = html + `<a href="${href}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
+            const url = href.replace('/console', '/artifact/index.html');
+            html = html + `<a href="${url}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
         }
 
         return html;
