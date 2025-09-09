@@ -322,31 +322,73 @@
         branchDiv.appendChild(copyLink);
     }
 
-    function styleReportLinks() {
+    function mergeReportCells(tds) {
+        if (tds.length === 0) return;
+
+        const mainTd = tds[0];
+        const statusIcon = mainTd.textContent;
+        const tooltip = tds[3].textContent;
+        const link = tds[2].querySelector('a');
+        const updatedLinkHtml = link ? reportLinkToIconsHtml(link) : '-';
+
+        mainTd.style = '';
+        mainTd.innerHTML = `<span class="report-table-status-icon" title="${tooltip}">${statusIcon}</span> ${updatedLinkHtml}`;
+        mainTd.classList.add('report-table-status-cell', 'text-start');
+        // remove the other tds
+        for (let i = 1; i < tds.length; i++) {
+            tds[i].remove();
+        }
+    }
+
+    function reportLinkToIconsHtml(link) {
+        if (!link) return;
+
+        const href = link.href;
+        let html = `<a href="${href}"><i class="bi bi-file-code" style="font-size: 18px;"></i></a>`;
+        if (href.includes('/job/selenium')) {
+            html = html + `<a href="${href}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
+        } else if (href.includes('/job/playwright')) {
+            html = html + `<a href="${href}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
+        }
+
+        return html;
+    }
+
+    function styleReportsTable() {
         // Look for links that contain "/reports/" in their href
-        const reportLinks = document.querySelectorAll('#description table a[href*="/job/"]');
-        const seleniumLinks = document.querySelectorAll('#description table a[href*="/job/selenium"]');
-        const playwrightLinks = document.querySelectorAll('#description table a[href*="/job/playwright"]');
+        const reportTable = document.querySelector('#description table');
+        if (!reportTable) return;
 
-        reportLinks.forEach(link => {
-          link.innerHTML = `<i class="bi bi-file-code" style="font-size: 18px;"></i>`;
-        });
+        reportTable.style = 'width: auto;';
+        reportTable.classList.add('table', 'table-sm', 'table-bordered', 'table-hover', 'table-striped', 'report-table');
 
-        seleniumLinks.forEach(link => {
-            // add another link after this one
-            const newLink = document.createElement('a');
-            newLink.href = link.href.replace('/console', '/artifact/report.html')
-            newLink.innerHTML = `<i class="bi bi-file-earmark-text" style="font-size: 18px;"></i>`;
-            link.insertAdjacentElement('afterend', newLink);
-        });
+        const reportTableTrs = reportTable.querySelectorAll('tr');
+        Array.from(reportTableTrs).forEach((tr, index) => {
+          const tds = Array.from(tr.querySelectorAll('td'))
 
-        playwrightLinks.forEach(link => {
-            // add another link after this one
-            const newLink = document.createElement('a');
-            newLink.href = link.href.replace('/console', '/artifact/index.html')
-            newLink.innerHTML = `<i class="bi bi-file-earmark-text" style="font-size: 18px;"></i>`;
-            link.insertAdjacentElement('afterend', newLink);
+          tds[0].classList.add('report-table-job-name');
+
+          if (tds[9].textContent.includes('✗')) {
+              tr.classList.add('table-danger');
+          } else if (tds[9].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[1].textContent.includes('✓')) {
+              tr.classList.add('table-success');
+          } else {
+              tr.classList.add('report-table-in-progress');
+          }
+          mergeReportCells([tds[1], tds[2], tds[3], tds[4]]);
+          mergeReportCells([tds[5], tds[6], tds[7], tds[8]]);
+          mergeReportCells([tds[9], tds[10], tds[11], tds[12]]);
+
         });
+        // Order TRs: in progress, failed, success
+        const inProgressRows = Array.from(reportTable.querySelectorAll('tr.report-table-in-progress'));
+        const failedRows = Array.from(reportTable.querySelectorAll('tr.table-danger'));
+        const successRows = Array.from(reportTable.querySelectorAll('tr.table-success'));
+        const tbody = reportTable.querySelector('tbody') || reportTable;
+
+        inProgressRows.forEach(row => tbody.appendChild(row));
+        failedRows.forEach(row => tbody.appendChild(row));
+        successRows.forEach(row => tbody.appendChild(row));
     }
 
     // Initialize the extension when the page is ready
@@ -358,7 +400,7 @@
         // Add copy buttons to existing content
         addCopyRspecButton();
         addCopyBranchButton();
-        styleReportLinks();
+        styleReportsTable();
     }
 
     // Wait for the page to be ready
