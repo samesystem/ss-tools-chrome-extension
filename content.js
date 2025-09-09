@@ -15,12 +15,23 @@
     const COPY_SVG = `
         <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
              width="18" height="18"
+             class="link-icon"
              viewBox="0 0 32 32" enable-background="new 0 0 32 32" xml:space="preserve"
         >
-            <rect x="13" y="9" fill="none" stroke="#26a69a" stroke-width="2" stroke-miterlimit="10" width="14" height="18"/>
-            <polyline fill="none" stroke="#26a69a" stroke-width="2" stroke-miterlimit="10" points="11,23 5,23 5,5 19,5 19,7 "/>
+            <rect x="13" y="9" fill="none" stroke-width="2" stroke-miterlimit="10" width="14" height="18"/>
+            <polyline fill="none" stroke-width="2" stroke-miterlimit="10" points="11,23 5,23 5,5 19,5 19,7 "/>
         </svg>
     `
+
+    const CUSTOM_CSS = `
+      .btn.btn-primary { background-color: #26a69a; border-color: #26a69a; }
+      .btn.btn-primary:hover { background-color: #00796b; border-color: #00796b; }
+      .btn.btn-primary:active { background-color: #004d40; border-color: #004d40; }
+      .btn.btn-link { color: #26a69a; }
+      .link-icon rect { stroke: #26a69a; }
+      .link-icon polyline { stroke: #26a69a; }
+    `
+
     // Function to inject Bootstrap CSS into the page
     function injectBootstrapCSS() {
         if (!document.querySelector('link[href*="bootstrap"]')) {
@@ -31,6 +42,10 @@
             link.crossOrigin = 'anonymous';
             document.head.appendChild(link);
         }
+
+        const style = document.createElement('style');
+        style.textContent = CUSTOM_CSS;
+        document.head.appendChild(style);
     }
 
     // Custom dropdown implementation (no Bootstrap JS needed)
