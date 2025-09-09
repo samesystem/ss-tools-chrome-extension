@@ -368,9 +368,9 @@
 
           tds[0].classList.add('report-table-job-name');
 
-          if (tds[9].textContent.includes('✗')) {
+          if (tds[9] && tds[9].textContent.includes('✗')) {
               tr.classList.add('table-danger');
-          } else if (tds[9].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[1].textContent.includes('✓')) {
+          } else if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || (tds[9] && tds[9].textContent.includes('✓'))) {
               tr.classList.add('table-success');
           } else {
               tr.classList.add('report-table-in-progress');
