@@ -326,6 +326,7 @@
         if (tds.length === 0) return;
 
         const mainTd = tds[0];
+        if (!mainTd) return;
         const statusIcon = mainTd.textContent;
         const tooltip = tds[3].textContent;
         const link = tds[2].querySelector('a');
