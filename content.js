@@ -302,7 +302,8 @@
         const descriptionDiv = document.querySelector('div#description');
         if(!descriptionDiv) return;
 
-        const branchDiv = descriptionDiv.querySelector('div')?.querySelector('div');
+        const branchDivs = descriptionDiv.querySelector('div')?.querySelectorAll('div');
+        const branchDiv = branchDivs ? Array.from(branchDivs).find(div => !div.textContent.includes("DEPLOY FAILED")) : null;
         const branchName = branchDiv ? branchDiv.textContent.trim() : '';
         if (branchName === '') return;
 
@@ -323,7 +324,6 @@
 
     function styleReportLinks() {
         // Look for links that contain "/reports/" in their href
-        debugger
         const reportLinks = document.querySelectorAll('#description table a[href*="/job/"]');
         const seleniumLinks = document.querySelectorAll('#description table a[href*="/job/selenium"]');
         const playwrightLinks = document.querySelectorAll('#description table a[href*="/job/playwright"]');
