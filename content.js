@@ -350,7 +350,7 @@
             const url = href.replace('/console', '/artifact/report/report.html');
             html = html + `<a href="${url}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
         } else if (href.includes('/job/playwright')) {
-            const url = href.replace('/console', '/artifact/index.html');
+            const url = href.replace('/console', '/artifact/report/index.html');
             html = html + `<a href="${url}"><i class="bi bi-file-earmark-text" style="font-size: 18px;"></i></a>`;
         }
 
@@ -394,6 +394,13 @@
         successRows.forEach(row => tbody.appendChild(row));
     }
 
+    function hideExtraDetailsTable() {
+      const extraDetailsTable = document.querySelector('div#main-panel>table');
+      if (extraDetailsTable) {
+        extraDetailsTable.style.display = 'none';
+      }
+    }
+
     // Initialize the extension when the page is ready
     function init() {
         // Inject Bootstrap CSS (but not JS due to CSP)
@@ -404,6 +411,7 @@
         addCopyRspecButton();
         addCopyBranchButton();
         styleReportsTable();
+        hideExtraDetailsTable();
     }
 
     // Wait for the page to be ready
