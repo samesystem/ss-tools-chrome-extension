@@ -192,22 +192,22 @@
 
         // Add event listeners
         mainButton.addEventListener('click', function() {
-            const nextSibling = dropdownContainer.nextElementSibling;
-            const rspecCommand = nextSibling ? commandFromDivContent(nextSibling.textContent, false) : '';
+            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, false) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
 
         fullCommandLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const nextSibling = dropdownContainer.nextElementSibling;
-            const rspecCommand = nextSibling ? commandFromDivContent(nextSibling.textContent, false) : '';
+            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, false) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
 
         filesOnlyLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const nextSibling = dropdownContainer.nextElementSibling;
-            const rspecCommand = nextSibling ? commandFromDivContent(nextSibling.textContent, true) : '';
+            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, true) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
 
@@ -255,8 +255,7 @@
     // Function to find divs containing rspec commands and add copy buttons
     function addCopyRspecButton() {
         // Look for divs that contain text matching "rspec ./spec/*" pattern
-        const allDivs = document.querySelectorAll('div');
-        const rspecPattern = /^result {\s+rspec '?\.\/spec\//;
+
         const buttonExists = !!document.querySelector('[data-copy-button]');
 
         if (buttonExists) {
@@ -264,13 +263,14 @@
             return;
         }
 
-        const matchingDiv = Array.from(allDivs).find(div => rspecPattern.test(div.textContent));
-        if (matchingDiv) {
+        const failedTestsDiv = document.querySelector('div.failed-tests-content');
+        if (failedTestsDiv && failedTestsDiv.textContent.includes('rspec')) {
+            const failedTestsTitle = document.querySelector('div.failed-tests-title');
             // Create a copy button dropdown and insert it before the div
             const copyButtonDropdown = createCopyButtonDropdown();
             copyButtonDropdown.setAttribute('data-copy-button', 'true');
-            matchingDiv.insertAdjacentElement('beforebegin', copyButtonDropdown);
-            console.log('Added copy button dropdown for:', matchingDiv.textContent);
+            copyButtonDropdown.style.marginLeft = '10px';
+            failedTestsTitle.appendChild(copyButtonDropdown);
         }
     }
 
