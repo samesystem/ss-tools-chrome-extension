@@ -190,23 +190,41 @@
         dropdownContainer.appendChild(dropdownToggle);
         dropdownContainer.appendChild(dropdownMenu);
 
+        // Helper function to get failed tests content div
+        function getFailedTestsContentDiv() {
+            const descriptionContent = document.querySelector('#description-content');
+            if (!descriptionContent) return null;
+
+            const childDivs = Array.from(descriptionContent.children);
+            const failedTestsContainer = childDivs.find(div =>
+                div.textContent.includes('Failed tests:') && div.textContent.includes('rspec')
+            );
+
+            if (!failedTestsContainer) return null;
+
+            // Find the styled div that contains the actual rspec commands
+            return Array.from(failedTestsContainer.children).find(div =>
+                div.style.marginLeft && div.textContent.includes('rspec')
+            );
+        }
+
         // Add event listeners
         mainButton.addEventListener('click', function() {
-            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const failedTestsDiv = getFailedTestsContentDiv();
             const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, false) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
 
         fullCommandLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const failedTestsDiv = getFailedTestsContentDiv();
             const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, false) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
 
         filesOnlyLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const failedTestsDiv = document.querySelector('div.failed-tests-content');
+            const failedTestsDiv = getFailedTestsContentDiv();
             const rspecCommand = failedTestsDiv ? commandFromDivContent(failedTestsDiv.textContent, true) : '';
             copyToClipboard(mainButton, rspecCommand, 'Copy RSpec command');
         });
@@ -263,14 +281,31 @@
             return;
         }
 
-        const failedTestsDiv = document.querySelector('div.failed-tests-content');
-        if (failedTestsDiv && failedTestsDiv.textContent.includes('rspec')) {
-            const failedTestsTitle = document.querySelector('div.failed-tests-title');
-            // Create a copy button dropdown and insert it before the div
-            const copyButtonDropdown = createCopyButtonDropdown();
-            copyButtonDropdown.setAttribute('data-copy-button', 'true');
-            copyButtonDropdown.style.marginLeft = '10px';
-            failedTestsTitle.appendChild(copyButtonDropdown);
+        // In the new Jenkins UI, failed tests are in #description-content
+        // Look for a div containing "Failed tests:" text
+        const descriptionContent = document.querySelector('#description-content');
+        if (!descriptionContent) return;
+
+        const childDivs = Array.from(descriptionContent.children);
+        const failedTestsContainer = childDivs.find(div =>
+            div.textContent.includes('Failed tests:') && div.textContent.includes('rspec')
+        );
+
+        if (failedTestsContainer) {
+            // The failed tests container has the title and content together
+            // Find the inner div with the rspec commands
+            const titleDiv = Array.from(failedTestsContainer.children).find(div =>
+                div.textContent === 'Failed tests:'
+            );
+
+            if (titleDiv) {
+                // Create a copy button dropdown and insert it after the title
+                const copyButtonDropdown = createCopyButtonDropdown();
+                copyButtonDropdown.setAttribute('data-copy-button', 'true');
+                copyButtonDropdown.style.marginLeft = '10px';
+                copyButtonDropdown.style.display = 'inline-block';
+                titleDiv.appendChild(copyButtonDropdown);
+            }
         }
     }
 
@@ -299,18 +334,36 @@
 
     function addCopyBranchButton() {
         // Look for divs that contain text matching "git checkout -b" pattern
-        const descriptionDiv = document.querySelector('div#description');
-        if(!descriptionDiv) return;
+        const descriptionContent = document.querySelector('#description-content');
+        if(!descriptionContent) return;
 
-        const branchDivs = descriptionDiv.querySelector('div')?.querySelectorAll('div');
-        const branchDiv = branchDivs ? Array.from(branchDivs).find(div => !div.textContent.includes("DEPLOY FAILED")) : null;
-        const branchName = branchDiv ? branchDiv.textContent.trim() : '';
+        // In the new UI, the branch name is typically the first child div
+        const branchDiv = Array.from(descriptionContent.children).find(div => {
+            const text = div.textContent.trim();
+            // Check if it looks like a branch name and doesn't contain other content markers
+            return text &&
+                   !text.includes('DEPLOY FAILED') &&
+                   !text.includes('retried jobs') &&
+                   !text.includes('Failed jobs:') &&
+                   !text.includes('Failed tests:') &&
+                   !text.includes('Fatal errors:') &&
+                   text.length > 0 &&
+                   text.length < 200; // Branch names are typically short
+        });
+
+        if (!branchDiv) return;
+
+        const branchName = branchDiv.textContent.trim();
         if (branchName === '') return;
+
+        // Check if copy button already exists
+        if (branchDiv.querySelector('[data-copy-branch]')) return;
 
         // Create a copy link and insert at the end of the branch div
         const copyLink = document.createElement('a');
         copyLink.innerHTML = COPY_SVG;
         copyLink.className = "btn btn-sm btn-link";
+        copyLink.setAttribute('data-copy-branch', 'true');
         copyLink.addEventListener('click', function(e) {
             e.preventDefault();
             writeToClipboard(branchName);
@@ -325,19 +378,25 @@
     function mergeReportCells(tds) {
         if (tds.length === 0) return;
 
-        const mainTd = tds[0];
+        // New structure: [status icon, separator, link, message]
+        const mainTd = tds[0]; // Status icon cell
         if (!mainTd) return;
-        const statusIcon = mainTd.textContent;
-        const tooltip = tds[3].textContent;
-        const link = tds[2].querySelector('a');
+
+        const statusIcon = mainTd.textContent.trim();
+        const linkCell = tds[2]; // Link is in the 3rd cell
+        const tooltip = tds[3] ? tds[3].textContent.trim() : ''; // Message is in the 4th cell
+        const link = linkCell ? linkCell.querySelector('a') : null;
         const updatedLinkHtml = link ? reportLinkToIconsHtml(link) : '-';
 
         mainTd.style = '';
         mainTd.innerHTML = `<span class="report-table-status-icon" title="${tooltip}">${statusIcon}</span> ${updatedLinkHtml}`;
         mainTd.classList.add('report-table-status-cell', 'text-start');
-        // remove the other tds
+
+        // Remove the other tds (separator, link, message)
         for (let i = 1; i < tds.length; i++) {
-            tds[i].remove();
+            if (tds[i]) {
+                tds[i].remove();
+            }
         }
     }
 
@@ -358,8 +417,15 @@
     }
 
     function styleReportsTable() {
-        // Look for links that contain "/reports/" in their href
-        const reportTable = document.querySelector('#description table');
+        // In the new Jenkins UI, the report table is inside a div containing "retried jobs"
+        const descriptionContent = document.querySelector('#description-content');
+        if (!descriptionContent) return;
+
+        const childDivs = Array.from(descriptionContent.children);
+        const retriedJobsDiv = childDivs.find(div => div.textContent.includes('retried jobs'));
+        if (!retriedJobsDiv) return;
+
+        const reportTable = retriedJobsDiv.querySelector('table');
         if (!reportTable) return;
 
         reportTable.style = 'width: auto;';
@@ -367,22 +433,38 @@
 
         const reportTableTrs = reportTable.querySelectorAll('tr');
         Array.from(reportTableTrs).forEach((tr, index) => {
-          const tds = Array.from(tr.querySelectorAll('td'))
+          const tds = Array.from(tr.querySelectorAll('td'));
+
+          // New structure has 13 cells:
+          // 0: job name
+          // 1-4: first run (status, separator, link, message)
+          // 5-8: second run (status, separator, link, message)
+          // 9-12: third run (status, separator, link, message)
+
+          if (tds.length < 13) return; // Skip rows that don't have the expected structure
 
           tds[0].classList.add('report-table-job-name');
 
-          if (tds[9] && tds[9].textContent.includes('✗')) {
+          // Determine row color based on status icons
+          // Check if any run has ✗ (failed)
+          if (tds[1].textContent.includes('✗') || tds[5].textContent.includes('✗') || tds[9].textContent.includes('✗')) {
               tr.classList.add('table-danger');
-          } else if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || (tds[9] && tds[9].textContent.includes('✓'))) {
+          }
+          // Check if any run has ✓ (success)
+          else if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[9].textContent.includes('✓')) {
               tr.classList.add('table-success');
-          } else {
+          }
+          // Otherwise it's in progress
+          else {
               tr.classList.add('report-table-in-progress');
           }
+
+          // Merge cells for each run
           mergeReportCells([tds[1], tds[2], tds[3], tds[4]]);
           mergeReportCells([tds[5], tds[6], tds[7], tds[8]]);
           mergeReportCells([tds[9], tds[10], tds[11], tds[12]]);
-
         });
+
         // Order TRs: in progress, failed, success
         const inProgressRows = Array.from(reportTable.querySelectorAll('tr.report-table-in-progress'));
         const failedRows = Array.from(reportTable.querySelectorAll('tr.table-danger'));
