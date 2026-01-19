@@ -446,15 +446,15 @@
           tds[0].classList.add('report-table-job-name');
 
           // Determine row color based on status icons
-          // Check if any run has ✗ (failed)
-          if (tds[1].textContent.includes('✗') || tds[5].textContent.includes('✗') || tds[9].textContent.includes('✗')) {
-              tr.classList.add('table-danger');
-          }
-          // Check if any run has ✓ (success)
-          else if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[9].textContent.includes('✓')) {
+          // Check if any run has ✓ (success) - job eventually succeeded
+          if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[9].textContent.includes('✓')) {
               tr.classList.add('table-success');
           }
-          // Otherwise it's in progress
+          // Check if any run has ✗ (failed) AND no run has ✓ (success) - job never succeeded
+          else if (tds[1].textContent.includes('✗') || tds[5].textContent.includes('✗') || tds[9].textContent.includes('✗')) {
+              tr.classList.add('table-danger');
+          }
+          // Otherwise it's in progress (no success or failure yet)
           else {
               tr.classList.add('report-table-in-progress');
           }
