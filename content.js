@@ -30,6 +30,7 @@
       .btn.btn-link { color: #26a69a; }
       .link-icon rect { stroke: #26a69a; }
       .link-icon polyline { stroke: #26a69a; }
+      #description-content div[style*="max-height"] { overflow: auto !important; }
     `
 
     // Function to inject Bootstrap CSS into the page
