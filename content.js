@@ -436,34 +436,32 @@
         Array.from(reportTableTrs).forEach((tr, index) => {
           const tds = Array.from(tr.querySelectorAll('td'));
 
-          // New structure has 13 cells:
-          // 0: job name
-          // 1-4: first run (status, separator, link, message)
-          // 5-8: second run (status, separator, link, message)
-          // 9-12: third run (status, separator, link, message)
-
-          if (tds.length < 13) return; // Skip rows that don't have the expected structure
+          // Row structure: job name + N runs, where each run = 4 cells
+          // (status icon, separator, link, message). N varies per build
+          // (typically 1-3 runs depending on retries).
+          if (tds.length < 5) return; // need name + at least one run
 
           tds[0].classList.add('report-table-job-name');
 
-          // Determine row color based on status icons
-          // Check if any run has ✓ (success) - job eventually succeeded
-          if (tds[1].textContent.includes('✓') || tds[5].textContent.includes('✓') || tds[9].textContent.includes('✓')) {
+          // Collect status-icon cells (first cell of each run)
+          const statusCells = [];
+          for (let i = 1; i + 3 < tds.length; i += 4) {
+              statusCells.push(tds[i]);
+          }
+
+          // Determine row color based on status icons across all runs
+          if (statusCells.some(td => td.textContent.includes('✓'))) {
               tr.classList.add('table-success');
-          }
-          // Check if any run has ✗ (failed) AND no run has ✓ (success) - job never succeeded
-          else if (tds[1].textContent.includes('✗') || tds[5].textContent.includes('✗') || tds[9].textContent.includes('✗')) {
+          } else if (statusCells.some(td => td.textContent.includes('✗'))) {
               tr.classList.add('table-danger');
-          }
-          // Otherwise it's in progress (no success or failure yet)
-          else {
+          } else {
               tr.classList.add('report-table-in-progress');
           }
 
           // Merge cells for each run
-          mergeReportCells([tds[1], tds[2], tds[3], tds[4]]);
-          mergeReportCells([tds[5], tds[6], tds[7], tds[8]]);
-          mergeReportCells([tds[9], tds[10], tds[11], tds[12]]);
+          for (let i = 1; i + 3 < tds.length; i += 4) {
+              mergeReportCells([tds[i], tds[i + 1], tds[i + 2], tds[i + 3]]);
+          }
         });
 
         // Order TRs: in progress, failed, success
